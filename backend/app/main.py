@@ -366,6 +366,26 @@ async def init_watchers(scan_existing: bool = True):
                 logger.error(f"Failed to start watcher {row['id']}: {e}")
 
 
+async def load_settings_from_db():
+    """Load settings from database on startup."""
+    async with get_db() as db:
+        cursor = await db.execute("SELECT key, value FROM app_settings")
+        rows = await cursor.fetchall()
+
+        for row in rows:
+            key, value = row["key"], row["value"]
+            if hasattr(app_settings, key):
+                current_type = type(getattr(app_settings, key))
+                if current_type == bool:
+                    setattr(app_settings, key, value.lower() in ("true", "1", "yes") if isinstance(value, str) else bool(value))
+                elif current_type == int:
+                    setattr(app_settings, key, int(value))
+                else:
+                    setattr(app_settings, key, value)
+
+        logger.info("Loaded settings from database")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan handler."""
@@ -374,6 +394,9 @@ async def lifespan(app: FastAPI):
 
     # Initialize database
     await init_db()
+
+    # Load settings from database
+    await load_settings_from_db()
 
     # Configure task queue
     task_queue.set_task_handler(process_task)
