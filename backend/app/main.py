@@ -414,9 +414,9 @@ app.include_router(settings.router)
 app.include_router(watchers.router)
 
 
-@app.get("/")
-async def root():
-    """Root endpoint."""
+@app.get("/api")
+async def api_info():
+    """API info endpoint."""
     return {
         "name": "SubAutoTrans",
         "version": "1.0.0",
@@ -452,6 +452,11 @@ STATIC_DIR = Path(__file__).parent.parent / "static"
 if STATIC_DIR.exists():
     # Mount static assets (js, css, images, etc.)
     app.mount("/assets", StaticFiles(directory=STATIC_DIR / "assets"), name="assets")
+
+    @app.get("/")
+    async def serve_index():
+        """Serve the index.html for root path."""
+        return FileResponse(STATIC_DIR / "index.html")
 
     @app.get("/{full_path:path}")
     async def serve_spa(full_path: str):
