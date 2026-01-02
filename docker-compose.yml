@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  subautotrans:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: subautotrans
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persist database
+      - ./data:/app/data
+      # Mount media directories (adjust paths as needed)
+      # - /path/to/your/media:/media:ro
+    environment:
+      # LLM API Keys (required)
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
+      - GLM_API_KEY=${GLM_API_KEY:-}
+      # Optional settings
+      - SOURCE_LANGUAGE=${SOURCE_LANGUAGE:-auto}
+      - TARGET_LANGUAGE=${TARGET_LANGUAGE:-Chinese}
+      - DEFAULT_LLM=${DEFAULT_LLM:-openai}
+      - MAX_CONCURRENT_TASKS=${MAX_CONCURRENT_TASKS:-2}
+      - BILINGUAL_OUTPUT=${BILINGUAL_OUTPUT:-false}
+      - SUBTITLE_OUTPUT_FORMAT=${SUBTITLE_OUTPUT_FORMAT:-mkv}
+      - OVERWRITE_MKV=${OVERWRITE_MKV:-false}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
