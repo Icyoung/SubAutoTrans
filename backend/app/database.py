@@ -21,12 +21,19 @@ async def init_db():
                 target_language TEXT NOT NULL,
                 llm_provider TEXT NOT NULL,
                 subtitle_track INTEGER,
+                force_override INTEGER DEFAULT 0,
                 error_message TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 completed_at TIMESTAMP
             )
         """)
+
+        # Migration: add force_override column if it doesn't exist
+        try:
+            await db.execute("ALTER TABLE tasks ADD COLUMN force_override INTEGER DEFAULT 0")
+        except Exception:
+            pass  # Column already exists
 
         await db.execute("""
             CREATE TABLE IF NOT EXISTS watchers (

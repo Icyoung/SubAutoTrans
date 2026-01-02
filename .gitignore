@@ -39,3 +39,4 @@ backend/data/*
 
 # Claude
 .claude/
+data/*.db

@@ -18,6 +18,7 @@ class TaskCreate(BaseModel):
     target_language: str = "Chinese"
     llm_provider: str = "openai"
     subtitle_track: Optional[int] = None
+    force_override: bool = False
 
 
 class TaskResponse(BaseModel):
@@ -30,6 +31,7 @@ class TaskResponse(BaseModel):
     target_language: str
     llm_provider: str
     subtitle_track: Optional[int]
+    force_override: bool = False
     error_message: Optional[str]
     created_at: datetime
     updated_at: datetime
@@ -47,6 +49,7 @@ class DirectoryTaskCreate(BaseModel):
     target_language: str = "Chinese"
     llm_provider: str = "openai"
     recursive: bool = False
+    force_override: bool = False
 
 
 class WatcherCreate(BaseModel):

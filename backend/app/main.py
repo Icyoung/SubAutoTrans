@@ -112,6 +112,7 @@ async def process_task(task_id: int):
     target_language = task["target_language"]
     llm_provider = task["llm_provider"]
     subtitle_track = task["subtitle_track"]
+    force_override = bool(task["force_override"]) if task["force_override"] is not None else False
 
     async def get_output_settings() -> tuple[str, bool]:
         async with get_db() as db:
@@ -151,6 +152,10 @@ async def process_task(task_id: int):
 
     async def should_skip(output_format: str, overwrite_mkv: bool) -> bool:
         from .services import subtitle as subtitle_service
+
+        # If force_override is enabled, never skip
+        if force_override:
+            return False
 
         if file_ext in [".srt", ".ass"]:
             if output_format not in ["srt", "ass"]:

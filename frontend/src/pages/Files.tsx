@@ -12,6 +12,7 @@ export function Files() {
   const [llmProvider, setLlmProvider] = useState('openai');
   const [mode, setMode] = useState<'file' | 'directory'>('file');
   const [recursive, setRecursive] = useState(false);
+  const [forceOverride, setForceOverride] = useState(false);
   const [defaultsLoaded, setDefaultsLoaded] = useState(false);
 
   const { data: settings } = useQuery({
@@ -47,6 +48,7 @@ export function Files() {
           target_language: targetLanguage,
           llm_provider: llmProvider,
           recursive,
+          force_override: forceOverride,
         });
       }
 
@@ -54,6 +56,7 @@ export function Files() {
         file_path: selectedFile.path,
         target_language: targetLanguage,
         llm_provider: llmProvider,
+        force_override: forceOverride,
       });
     },
     onSuccess: () => {
@@ -188,6 +191,19 @@ export function Files() {
                       <span className="text-sm font-bold text-slate-600">Include subdirectories</span>
                     </label>
                   )}
+
+                  <label className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={forceOverride}
+                      onChange={(e) => setForceOverride(e.target.checked)}
+                      className="w-4 h-4 rounded text-brand-600 focus:ring-brand-500/20 border-slate-300"
+                    />
+                    <div>
+                      <span className="text-sm font-bold text-slate-600">Force override</span>
+                      <p className="text-xs text-slate-400 mt-0.5">Translate even if target language subtitle exists</p>
+                    </div>
+                  </label>
                 </div>
 
                 <div className="pt-2">

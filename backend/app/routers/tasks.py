@@ -20,12 +20,15 @@ router = APIRouter(prefix="/api/tasks", tags=["tasks"])
 
 
 async def check_file_should_skip(
-    db, file_path: str, target_language: str
+    db, file_path: str, target_language: str, force_override: bool = False
 ) -> tuple[bool, str]:
     """
     Check if a file should be skipped for translation.
     Returns (should_skip, reason).
     """
+    # If force_override is True, only check for existing pending/processing tasks
+    # Skip all other checks (existing translations, subtitle tracks, output files)
+
     # 1. Check if there's already a pending/processing task for this file+language
     cursor = await db.execute(
         """
@@ -37,6 +40,10 @@ async def check_file_should_skip(
     existing_task = await cursor.fetchone()
     if existing_task:
         return True, f"Task already exists (id={existing_task['id']}, status={existing_task['status']})"
+
+    # If force_override is True, skip all remaining checks
+    if force_override:
+        return False, ""
 
     # 2. Check if file is already marked as translated in database
     cursor = await db.execute(
@@ -94,7 +101,7 @@ async def create_task(task: TaskCreate):
     async with get_db() as db:
         # Check if file should be skipped
         should_skip, reason = await check_file_should_skip(
-            db, task.file_path, task.target_language
+            db, task.file_path, task.target_language, task.force_override
         )
         if should_skip:
             raise HTTPException(
@@ -104,8 +111,8 @@ async def create_task(task: TaskCreate):
 
         cursor = await db.execute(
             """
-            INSERT INTO tasks (file_path, file_name, target_language, llm_provider, subtitle_track)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO tasks (file_path, file_name, target_language, llm_provider, subtitle_track, force_override)
+            VALUES (?, ?, ?, ?, ?, ?)
             """,
             (
                 task.file_path,
@@ -113,6 +120,7 @@ async def create_task(task: TaskCreate):
                 task.target_language,
                 task.llm_provider,
                 task.subtitle_track if task.file_path.lower().endswith(".mkv") else None,
+                1 if task.force_override else 0,
             ),
         )
         await db.commit()
@@ -172,7 +180,7 @@ async def create_directory_tasks(request: DirectoryTaskCreate):
         for file_path in mkv_files:
             # Check if file should be skipped
             should_skip, reason = await check_file_should_skip(
-                db, file_path, request.target_language
+                db, file_path, request.target_language, request.force_override
             )
             if should_skip:
                 skipped_files.append({"file": file_path, "reason": reason})
@@ -183,14 +191,15 @@ async def create_directory_tasks(request: DirectoryTaskCreate):
 
             cursor = await db.execute(
                 """
-                INSERT INTO tasks (file_path, file_name, target_language, llm_provider)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO tasks (file_path, file_name, target_language, llm_provider, force_override)
+                VALUES (?, ?, ?, ?, ?)
                 """,
                 (
                     file_path,
                     file_name,
                     request.target_language,
                     request.llm_provider,
+                    1 if request.force_override else 0,
                 ),
             )
             created_tasks.append(cursor.lastrowid)
@@ -442,6 +451,7 @@ def _row_to_task(row) -> TaskResponse:
         target_language=row["target_language"],
         llm_provider=row["llm_provider"],
         subtitle_track=row["subtitle_track"],
+        force_override=bool(row["force_override"]) if row["force_override"] is not None else False,
         error_message=row["error_message"],
         created_at=datetime.fromisoformat(row["created_at"]),
         updated_at=datetime.fromisoformat(row["updated_at"]),

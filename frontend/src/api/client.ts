@@ -30,6 +30,7 @@ export interface Task {
   target_language: string;
   llm_provider: string;
   subtitle_track: number | null;
+  force_override: boolean;
   error_message: string | null;
   created_at: string;
   updated_at: string;
@@ -121,6 +122,7 @@ export const tasksApi = {
     target_language?: string;
     llm_provider?: string;
     subtitle_track?: number;
+    force_override?: boolean;
   }) =>
     request<Task>('/api/tasks', {
       method: 'POST',
@@ -132,6 +134,7 @@ export const tasksApi = {
     target_language?: string;
     llm_provider?: string;
     recursive?: boolean;
+    force_override?: boolean;
   }) =>
     request<{ created_count: number; task_ids: number[] }>('/api/tasks/directory', {
       method: 'POST',
