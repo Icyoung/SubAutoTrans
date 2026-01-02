@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { watchersApi, settingsApi } from '../api/client';
 import type { FileInfo } from '../api/client';
 import { FileBrowser } from '../components/FileBrowser';
-import { Eye, EyeOff, Trash2, Plus, Loader2, Folder, XCircle, CheckCircle } from 'lucide-react';
+import { Eye, EyeOff, Trash2, Plus, Loader2, Folder, XCircle } from 'lucide-react';
 
 export function Watchers() {
   const queryClient = useQueryClient();
