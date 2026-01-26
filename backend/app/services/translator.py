@@ -146,7 +146,12 @@ async def process_mkv_translation(
 
     try:
         # Translate subtitle
-        temp_suffix = f".{output_format}" if output_format in ("srt", "ass") else ".srt"
+        # Use ASS format for bilingual to support secondary subtitle styling
+        if bilingual and output_format not in ("srt", "ass"):
+            effective_format = "ass"
+        else:
+            effective_format = output_format if output_format in ("srt", "ass") else "srt"
+        temp_suffix = f".{effective_format}"
         temp_translated = tempfile.mktemp(suffix=temp_suffix)
 
         await translate_subtitle_file(
@@ -156,7 +161,7 @@ async def process_mkv_translation(
             source_language,
             target_language,
             bilingual,
-            output_format=output_format,
+            output_format=effective_format,
             progress_callback=progress_callback,
         )
 
